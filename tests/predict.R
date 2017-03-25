@@ -156,3 +156,29 @@ if (getRversion() > "3.0.0") {
                  c(255.645493, 262.3263, 268.86947, 279.0608,
                    293.9390, 304.4721),tol=1e-4)
 }
+
+      
+rinvgauss <- function(n, mu, lambda) {
+    # transcribed from https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution
+    nu <- rnorm(n)
+    y <- nu^2
+    x <- mu + (mu^2 * y)/(2*lambda) - (mu/(2*lambda)) * sqrt(4*mu*lambda*y + mu^2*y^2)
+    z <- runif(n)
+    ifelse(z <= mu/(mu + x), x, mu^2/x)
+}
+
+inverse.gaussian_simfun <- function(object, nsim, ftd = fitted(object),
+                                    wts = weights(object)) {
+    if (any(wts != 1)) message("using weights as inverse variances")
+    dispersion <- sum((weights(object, 'working') * 
+        resid(object, 'working')^2)[weights(object, 'working')>0])/df.residual(object)
+    rinvgauss(nsim * length(ftd), mu = ftd, 
+                     lambda = wts/dispersion)
+}
+# ... skip a few
+simfunList <- list(gaussian = gaussian_simfun,
+       binomial = binomial_simfun,
+       poisson  = poisson_simfun,
+       Gamma    = Gamma_simfun,
+       negative.binomial = negative.binomial_simfun,
+       inverse.gaussian = inverse.gaussian_simfun)
